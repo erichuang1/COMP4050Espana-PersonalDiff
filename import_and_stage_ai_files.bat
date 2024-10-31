@@ -1,3 +1,4 @@
+@REM You could also try `rd /s /q`
 if exist "_internalRepo\" (
 	rmdir /s /q "_internalRepo"	:: win10 works?
 	rm -rf _internalRepo		:: win11 works?

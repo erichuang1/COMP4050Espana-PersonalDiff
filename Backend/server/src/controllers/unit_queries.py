@@ -1,7 +1,8 @@
-from src.models.models_all import *
-from src.db_instance import db
 from sqlalchemy import select
-from src.file_management import *
+
+from src.db_instance import db
+from src.models.models_all import *
+import src.file_management as fm
 
 def create_unit(data):
     """
@@ -149,9 +150,9 @@ def delete_unit_from_db(unit_code):
                 generated_qn_files = db.session.execute(select(GeneratedQnFile).filter_by(submission_id=submission.submission_id)).scalars()
                 # Step 3d: Delete the file, using file system management
                 for generated_qn_file in generated_qn_files:
-                    file_status = del_file(generated_qn_file.generated_qn_file_name)
+                    file_status = fm.del_file(generated_qn_file.generated_qn_file_name)
 
-                    if file_status == FileStatus.OKAY:
+                    if file_status == fm.FileStatus.OKAY:
                         print(f"File deleted successfully.")
                     else:
                         print(f"Failed to delete file. Status: {file_status.name}")

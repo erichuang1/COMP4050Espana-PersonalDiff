@@ -1,9 +1,10 @@
-import csv
-from src.db_instance import db
-from flask import request
-from src.models.models_all import *
-from src.file_management import *
 from sqlalchemy import select
+import csv
+from flask import request
+
+from src.db_instance import db
+from src.models.models_all import *
+import src.file_management as fm
 
 def upload_student_csv(unit_code, request):
     """
@@ -12,14 +13,14 @@ def upload_student_csv(unit_code, request):
     :return: JSON object with details of the uploaded files or an error message.
     """
     # Use the file management to store the file
-    status, file_path = store_file_req(request)
+    status, file_path = fm.store_file_req(request)
 
-    if status != FileStatus.OKAY:
+    if status != fm.FileStatus.OKAY:
         return {"message": "File upload failed", "error": status.name}, 400
 
     # Extract the filename
     file = request.files['file']
-    filename = secure_filename(file.filename)
+    filename = fm.secure_filename(file.filename)
 
     # Save the file information in the database
     try:
@@ -61,14 +62,14 @@ def fetch_students_list(unit_code):
         csv_path = csv_file.studentcsv_file_path
         
         # Use get_file method to retrieve the file
-        file_status, file = get_file(csv_path)
+        file_status, file = fm.get_file(csv_path)
         
         # validate the file path and extension
-        if file_status == FileStatus.BAD_PATH:
+        if file_status == fm.FileStatus.BAD_PATH:
             return {"message": f"File not found: {csv_path}"}, 404
-        elif file_status == FileStatus.BAD_EXTENSION:
+        elif file_status == fm.FileStatus.BAD_EXTENSION:
             return {"message": f"Invalid file extension for file: {csv_path}"}, 400
-        elif file_status == FileStatus.OKAY:
+        elif file_status == fm.FileStatus.OKAY:
             try:
                 with file:
                     csv_reader = csv.DictReader(file)

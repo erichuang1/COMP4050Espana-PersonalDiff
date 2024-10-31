@@ -38,8 +38,8 @@
 
 
 ## 4. Running the Project Locally
-Windows:
-```powershell
+### Windows
+```bash
 cd Backend\server
 
 # Untrack changes for the following files
@@ -47,13 +47,13 @@ git update-index --assume-unchanged .\initialise_db.py
 git update-index --assume-unchanged .\docker-compose.yml
 
 # Setup Python environment
-python -m venv env (or python3)
+python -m venv env
 env\Scripts\activate
 pip install -r requirements.txt
 ```
-Or alternatively, you can use the PowerShell script  `run-backend.ps1` to setup & run the server. You may need to [adjust your PowerShell script execution settings](https://superuser.com/questions/106360/how-to-enable-execution-of-powershell-scripts), or in other cases, zip & unzip the repo to clear the download protection tags. 
+Alternatively, you can use `run-backend.ps1` to simplify the setup process. You may need to [adjust your PowerShell script execution settings](https://superuser.com/questions/106360/how-to-enable-execution-of-powershell-scripts), or in other cases, zip & unzip the repo to remove the download protection tags. 
 
-macOS:
+### macOS
 ```bash
 cd Backend\server
 
@@ -205,31 +205,33 @@ To delete a file in s3 bucket :
 
 # Step 3 - Commands to run after setting up .env file:
 ## If you are running the server in Docker
-1. `docker-compose build` builds the image from the Dockerfile and the precompiled mysql image
-2. `docker-compose up` starts the docker containers or `docker-compose up --build`
-3. `docker exec -it flask_container python initialise_db.py` to initialise the MySQL database and create tables in the database using the `SQLAlchemy` Models in `models_all.py`. 
-4. `docker exec -it flask_container python generate_cert.py` to generate or renew the self-signed HTTPS certificate. 
-5. After that, you will be able to go to `Docker Desktop` and see both the containers running
-6. You can access your localhost at port 8001 to access the active flask server
-7. To enter terminal of the `mysql_container` do the following:
+1. Make sure `SQLALCHEMY_DATABASE_URI` uses port `3306`. 
+2. `docker-compose build` builds the image from the Dockerfile and the precompiled mysql image
+3. `docker-compose up` starts the docker containers or `docker-compose up --build`
+4. `docker exec -it flask_container python initialise_db.py` to initialise the MySQL database and create tables in the database using the `SQLAlchemy` Models in `models_all.py`. 
+5. `docker exec -it flask_container python generate_cert.py` to generate or renew the self-signed HTTPS certificate. 
+6. After that, you will be able to go to `Docker Desktop` and see both the containers running
+7. You can access your localhost at port `80` or `443` to access the active flask server
+8. To enter terminal of the `mysql_container` do the following:
    1. `docker exec -it mysql_container bash`
-8. To interact with the database itself do
+9. To interact with the database itself do
    1. `mysql -u testUser -p`
    2. Enter the password you set for your database : `testUer123`
    3. `use 4050Backend` to able to write quieries for the tables in that database 
    4. `describe unit;` to see all the columns and datatypes in the `unit` table.
 
 ## If you want to run the Flask Server Locally
-1. Open `.env` file, modify `SQLALCHEMY_DATABASE_URI` to have `@localhost` instead, like this: 
+1. Make sure `SQLALCHEMY_DATABASE_URI` uses port `3307`. 
+2. Open `.env` file, modify `SQLALCHEMY_DATABASE_URI` to have `@localhost` instead, like this: 
    ```bash
    SQLALCHEMY_DATABASE_URI='mysql+pymysql://testUser:testUser123@localhost:3306/4050Backend'
    ```
-2. `docker-compose build` builds the image from the Dockerfile and the precompiled mysql image
-3. `docker-compose up mysql_container` to start the database server.
-4. `python initialise_db.py` to initialise the MySQL database. 
+3. `docker-compose build` builds the image from the Dockerfile and the precompiled mysql image
+4. `docker-compose up mysql_container` to start the database server.
+5. `python initialise_db.py` to initialise the MySQL database. 
    1. Refer to the diagnostics section if you encountered an error during this step.
-5. `python generate_cert.py` to generate or renew the self-signed HTTPS certificate. 
-6. Optional: To interact with the database, do
+6. `python generate_cert.py` to generate or renew the self-signed HTTPS certificate. 
+7. Optional: To interact with the database, do
    1. `docker exec -it mysql_container mysql -u root -ppasswordtest123`
    2. `use 4050Backend;` to switch to our database
    3. `show full tables;` to list all tables
@@ -242,16 +244,30 @@ Example error message:
 ```
 sqlalchemy.exc.OperationalError: (pymysql.err.OperationalError) (2003, "Can't connect to MySQL server on 'localhost' ([WinError 10061] No connection could be made because the target machine actively refused it)")
 ```
-Resolution: In `SQLALCHEMY_DATABASE_URI`, replace `<port>` with either `3306` or `3307` to see which port works:
+Resolution: In `SQLALCHEMY_DATABASE_URI`, replace `<port>` with either `3306` or `3307` depending where you are running the server (`3306` for docker, `3307` for local):
 ```bash
 SQLALCHEMY_DATABASE_URI='mysql+pymysql://testUser:testUser123@localhost:<port>/4050Backend'
 ```
-On Windows, you could also try restarting Network Location Awareness Service Provider (NLA) to release the ports being used:
+On Windows, you could also try restarting its Network Address Translation (NAT) Service to release the ports being used:
 ```bash
-net stop nlasvc
-net start nlasvc
+net stop winnat
+net start winnat
 ```
-### Error 2: DNS Name Not Resolved
+
+### Error 2: DB User Not Initialised
+Example error message: 
+```
+sqlalchemy.exc.OperationalError: (pymysql.err.OperationalError) (1045, "Access denied for user 'testuser'@'172.18.0.1' (using password: YES)")
+```
+Resolution: Access mysql using one of the following methods:
+- `docker exec -it mysql_container mysql -u root -ppasswordtest123`
+- Open Docker Desktop, nevigate to `mysql_container`, in the Exec tab, run `mysql -u root -ppasswordtest123`
+
+Now execute all commands in `init.sql` to manually initialise the users. 
+
+Note: There were cases that a restart of the computer is needed to solve this issue. 
+
+### Error 3: DNS Name Not Resolved
 Example error message: 
 ```
 sqlalchemy.exc.OperationalError: (pymysql.err.OperationalError) (2003, "Can't connect to MySQL server on 'mysql_container' ([Errno 11001] getaddrinfo failed)")
@@ -260,6 +276,9 @@ Resolution: In `SQLALCHEMY_DATABASE_URI`, replace `<addr_name>` with either `loc
 ```bash
 SQLALCHEMY_DATABASE_URI='mysql+pymysql://testUser:testUser123@<addr_name>:3306/4050Backend'
 ```
+
+### If you are using `run-backend.ps1`
+You can create a second .env file (e.g. `.env.docker` or `.env.local`). The script will recognise them and switch automatically depending on the mode selected. (e.g. `.\run-backend.ps1 -d` will switch to the docker config.) 
 
 
 # Step 4 - To test the server using command line:

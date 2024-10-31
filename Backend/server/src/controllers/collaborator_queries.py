@@ -1,6 +1,7 @@
-from src.db_instance import db
-from src.models.models_all import Staff, Unit, ta_added_to_unit
 from sqlalchemy import select
+
+from src.db_instance import db
+from src.models.models_all import *
 
 def add_collaborator_to_unit(unit_code, data):
     """

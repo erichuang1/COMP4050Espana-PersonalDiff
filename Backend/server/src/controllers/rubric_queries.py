@@ -1,13 +1,10 @@
 from io import StringIO
-import time
 from flask import json, send_file
-# from src.file_management import *
-from src.models.models_all import *
-from src.db_instance import db
 from sqlalchemy import select
 
+from src.db_instance import db
+from src.models.models_all import *
 import src.formatting as formatting
-# from src.job_subsystem import SubsystemStatus
 import src.job_subsystem as js
 import src.file_management as fm
 
@@ -25,7 +22,6 @@ def create_rubric(data):
     '''
     try: 
         # Extract the required details the AI module needs to receive for rubric generation 
-        rubric_title = data.get('rubric_title')
         assessment_description = data.get('assessment_description')
         criteria = data.get('criteria')
         ulos = data.get('ulos')
@@ -35,10 +31,8 @@ def create_rubric(data):
         if existing_staff is None:
             return{"message": f"Learning design staff member with email {staff_email} not found"}, 404
         # Send the `data` to the function in the job subsystem responsible for sending a rubric generation request to the AI module
-        # job_status, job_id  = js.submit_new_rubric_job(staff_email, assessment_description, criteria, ulos)
-        status, ulos_path = fm.create_json_file(rubric_title + "_ULOs.json", ulos)
-        job_status, job_id  = js.submit_new_rubric_gen(assessment_description, staff_email, criteria, ulos_path)
-
+        job_status, job_id  = js.submit_new_rubric_gen(assessment_description, staff_email, criteria, ulos)
+        
         if job_status != js.SubsystemStatus.OKAY:
             return {"error": f"Failed to submit job for question generation checking status {job_status}"}, 500
         
@@ -86,8 +80,6 @@ def upload_generated_rubric(staff_email, rubric_title, generated_rubric_file_nam
         return {"message": "An error occurred while saving generated rubric details to DB", "error": str(e)}, 500
 
 def get_rubric(rubric_id):
-    from src.job_subsystem import SubsystemStatus
-
     # Step 1: Retrieve rubric
     rubric = db.session.execute(select(RubricGenerated).filter_by(rubric_id=rubric_id)).scalar_one_or_none()
 
@@ -149,7 +141,7 @@ def update_rubric_changes(rubric_id, data):
         # Step 3: Replace the existing JSON in S3 with the new data
         status, message = fm.update_file_in_s3(rubric_file_path, json.dumps(data), 'application/json')
 
-        if status != FileStatus.OKAY:
+        if status != fm.FileStatus.OKAY:
             return {"message": f"Failed to update rubric in S3: {message}"}, 500
         # Step 4: Retrieve the updated rubric file from the s3 path
         rubric_file_path = rubric.rubric_json_s3_file_path
@@ -177,7 +169,7 @@ def delete_rubric_from_db(rubric_id):
         if rubric is None:
             return {"message": "Rubric not found"}, 404
         filestatus = fm.del_file(rubric.rubric_json_s3_file_name)
-        if filestatus != FileStatus.OKAY:
+        if filestatus != fm.FileStatus.OKAY:
             return {"message": f"File `{rubric.rubric_json_s3_file_name}` could not be deleted", "error": filestatus.name}, 400
         else:
             db.session.delete(rubric)
@@ -258,7 +250,7 @@ def download_rubric_as(rubric_id, format):
             download_name = "rubric.md"
             mimetype = 'text/markdown'
         case "pdf":
-            status,download_file = fm.convert_md_str_to_pdf_bytes(rubric_md_text, None)
+            status,download_file = fm.convert_md_str_to_pdf_bytes(rubric_md_text)
             download_name = "rubric.pdf"
             mimetype = 'application/pdf'
         case "xls":

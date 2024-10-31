@@ -1,10 +1,14 @@
-from flask import jsonify, send_file
+import json
+import traceback
+from io import StringIO
+from flask import send_file
+from sqlalchemy import select
+
 from src.db_instance import db
 from src.models.models_all import *
-from sqlalchemy import select, text
-from src.file_management import *
-from src.job_subsystem import submit_new_viva_gen, submit_new_viva_regen, SubsystemStatus
-import traceback
+import src.file_management as fm
+import src.formatting as formatting
+import src.job_subsystem as js
 
 def generate_for_all(unit_code, project_title):
     '''
@@ -42,11 +46,11 @@ def generate_for_all(unit_code, project_title):
 
         #Step 4 : Send Each submission to _submit_new_job( sub_id, qns_count, unit code, level )
         for submission in submissions:
-            job_status, message, job_id = submit_new_viva_gen(submission.submission_id, submission.submission_file_path,
+            job_status, message, job_id = js.submit_new_viva_gen(submission.submission_id, submission.submission_file_path,
                                             project.project_name, unit.unit_name, unit.unit_level, challengeLevel, 
                                             factual_recall_count, analysis_evaluation_count, open_ended_discussion_count, 
                                             application_problem_solving_count, conceptual_understanding_count )
-            if job_status != SubsystemStatus.OKAY:            
+            if job_status != js.SubsystemStatus.OKAY:            
                 return {"error": f"Failed to submit job for question generation checking status {job_status}, JobID: {job_id}, message :{str(message)}"}, 500
 
             jobs.append({
@@ -87,12 +91,12 @@ def generate_for_submission(unit_code, project_title, submission_id):
     submission = db.session.execute(select(Submission).filter_by(submission_id = submission_id)).scalar_one_or_none()
     
     # Step 4 : Send the submission to _submit_new_job( sub_id, qns_count, unit code, level )
-    job_status, message, job_id = submit_new_viva_gen(submission.submission_id, submission.submission_file_path,
+    job_status, message, job_id = js.submit_new_viva_gen(submission.submission_id, submission.submission_file_path,
                                             project.project_name, unit.unit_name, unit.unit_level, challengeLevel, 
                                             factual_recall_count, analysis_evaluation_count, open_ended_discussion_count, 
                                             application_problem_solving_count, conceptual_understanding_count )
     # Step 5 : Check the job status
-    if job_status != SubsystemStatus.OKAY:            
+    if job_status != js.SubsystemStatus.OKAY:            
         return {"error": f"Failed to submit job for question generation checking status {job_status}, JobID: {job_id}, message :{str(message)}"}, 500
 
     try:
@@ -168,11 +172,11 @@ def regenerate_questions(unit_code, project_title, submission_id, data):
         select(GeneratedQnFile).filter_by(submission_id=submission_id)).scalars().all()
 
     # Step 4 : Send the submission to _submit_new_job( sub_id, qns_count, unit code, level ) 
-    job_status, message, job_id = submit_new_viva_regen(submission.submission_id, submission.submission_file_path, project.project_name,
+    job_status, message, job_id = js.submit_new_viva_regen(submission.submission_id, submission.submission_file_path, project.project_name,
                                                         unit.unit_name, question_reason_list, question_files_generated[-1].generated_qn_file_path)
     
     # Step 5 : Check the job status
-    if job_status != SubsystemStatus.OKAY:            
+    if job_status != js.SubsystemStatus.OKAY:            
         return {"error": f"Failed to submit job for question generation checking status {job_status}, JobID: {job_id}, message :{str(message)}"}, 500
 
     try:
@@ -213,13 +217,13 @@ def get_questions_for_submission(submission_id):
             question_file_path = question_file_generated.generated_qn_file_path
 
             # Step 3: Use the get_file function to fetch the file from S3
-            status, file = get_file(question_file_path)
+            status, file = fm.get_file(question_file_path)
 
-            if status == FileStatus.BAD_PATH:
+            if status == fm.FileStatus.BAD_PATH:
                 return {"message": f"File {question_file_path} not found in S3."}, 404
-            elif status == FileStatus.BAD_EXTENSION:
+            elif status == fm.FileStatus.BAD_EXTENSION:
                 return {"message": "File has an invalid extension."}, 400
-            elif status == FileStatus.UNKNOWN_ERR:
+            elif status == fm.FileStatus.UNKNOWN_ERR:
                 return {"message": "An unknown error occurred while retrieving the file from S3."}, 500
 
             # Step 4: Load the outer JSON from the file-like object
@@ -251,13 +255,13 @@ def get_job_status(job_id):
         job_status = get_job_status(job_id)  
 
         # Check if current job status
-        if job_status == SubsystemStatus.COMPLETED_JOB:
+        if job_status == js.SubsystemStatus.COMPLETED_JOB:
             return {
                 "message": "Question generation is completed.",
                 "job_id": job_id,
                 "status": "COMPLETED", 
             }, 200
-        elif job_status == SubsystemStatus.AWAITING_INSTANCE:
+        elif job_status == js.SubsystemStatus.AWAITING_INSTANCE:
             return {
                 "message": "Question generation is in progress.",
                 "job_id": job_id, 
@@ -273,7 +277,7 @@ def get_job_status(job_id):
             return {"message": "An error occurred while getting the status.", "error": str(e)}, 500
 
 #TODO => Check if pdf is being generated from the JSON file stored on disk
-def download_questions(submission_id):
+def download_questions(submission_id, format):
     '''
       Download the generated questions for a specific submission.
 
@@ -296,12 +300,27 @@ def download_questions(submission_id):
     question_file_path = question_details.generated_qn_file_path
 
     # Step 4: Get the file from the file System
-    question_file = get_file(question_file_path)
+    status,question_str = fm.get_file(question_details.generated_qn_file_path)
+    question_dict = json.load(question_str)
+    question_md_text = formatting.viva_make_md(question_dict)
+
+    match format.lower():
+        case "md":
+            download_file = StringIO(question_md_text)
+            download_file.seek(0)
+            download_name = "rubric.md"
+            mimetype = 'text/markdown'
+        case "pdf":
+            status,download_file = fm.convert_md_str_to_pdf_bytes(question_md_text)
+            download_name = "rubric.pdf"
+            mimetype = 'application/pdf'
+        case _:
+            return {"message": "Unsupported format"}, 400
 
     try:
         # https://flask.palletsprojects.com/en/3.0.x/api/ 
         # Step 5: Send the file as an attachment for download
-        return send_file(question_file , as_attachment=True), 200
+        return send_file(download_file, as_attachment=True, download_name=download_name, mimetype=mimetype), 200
     except Exception as e:
         return {"message": f"An error occurred while downloading the generated questions for submission ID {submission_id}", "error": str(e)}, 500
 

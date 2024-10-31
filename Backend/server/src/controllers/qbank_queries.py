@@ -1,8 +1,9 @@
 import csv
+from sqlalchemy import select
+
 from src.db_instance import db
 from src.models.models_all import *
-from src.file_management import *
-from sqlalchemy import select
+import src.file_management as fm
 
 def add_questions(unit_code, project_title, request):
     """
@@ -13,15 +14,15 @@ def add_questions(unit_code, project_title, request):
     :return: JSON object with a success message or an error message.
     """
     # Step 1: Use the file management to store the file
-    status, file_path = store_file_req(request)
+    status, file_path = fm.store_file_req(request)
 
     # Step 2: Check the STATUS
-    if status != FileStatus.OKAY:
+    if status != fm.FileStatus.OKAY:
         return {"message": "File upload failed", "error": status.name}, 400
 
     # Step 3: Extract the filename
     file = request.files['file']
-    filename = secure_filename(file.filename)
+    filename = fm.secure_filename(file.filename)
 
     project = db.session.execute(select(Project).filter_by(unit_code=unit_code, project_name=project_title)).scalar_one_or_none()
     # If project does not exist, return error message
@@ -81,14 +82,14 @@ def retrieve_questions_from_db(unit_code, project_title):
     csv_path = latest_question_bank.qnbank_file_path
     
     # Use get_file method to retrieve the file
-    file_status, file = get_file(csv_path)
+    file_status, file = fm.get_file(csv_path)
     
     # validate the file path and extension
-    if file_status == FileStatus.BAD_PATH:
+    if file_status == fm.FileStatus.BAD_PATH:
         return {"message": f"File not found: {csv_path}"}, 404
-    elif file_status == FileStatus.BAD_EXTENSION:
+    elif file_status == fm.FileStatus.BAD_EXTENSION:
         return {"message": f"Invalid file extension for file: {csv_path}"}, 400
-    elif file_status == FileStatus.OKAY:
+    elif file_status == fm.FileStatus.OKAY:
         try:
             with file:
                 csv_reader = csv.DictReader(file)

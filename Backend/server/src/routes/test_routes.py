@@ -2,11 +2,11 @@ import json
 import os
 from flask import Blueprint, jsonify
 
-test = Blueprint('test', __name__)
-
 import src.controllers.rubric_queries as rq
 import src.job_subsystem as js
 import src.file_management as fm
+
+test = Blueprint('test', __name__)
 
 @test.route('/')
 def home():

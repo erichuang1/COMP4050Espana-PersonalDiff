@@ -28,10 +28,12 @@ sleep 5  # Adjust if your services take longer to start
 # echo "Applying migrations to the database..."
 # docker exec -it flask_container flask --app src.main db upgrade
 
+# Generate self-signed certificate for HTTPS
+py generate_cert.py
+
 # Run the Flask initialization script in the container
 echo "Running Flask initialization script in the container..."
 docker exec -it flask_container python initialise_db.py
-
 
 # # Run the insert_data.py script inside the container
 # echo "Running data insertion script..."

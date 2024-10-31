@@ -178,7 +178,7 @@ def _process_completed_job(job:_SubsystemJob, data:dict)->SubsystemStatus:
     
 def _process_viva(job:_SubsystemJob, data:dict)->SubsystemStatus:
     """Processes a completed job, saving the given file to disk and updating databases appropriately."""
-    import src.controllers.question_generation_queries as qgenqueries
+    import src.controllers.qgen_queries as qgen_queries
 
     if job.jobType not in _jobTypeIsViva:
         return SubsystemStatus.WRONG_JOB
@@ -188,7 +188,7 @@ def _process_viva(job:_SubsystemJob, data:dict)->SubsystemStatus:
         if status != SubsystemStatus.OKAY:
             return status
     
-    combined_questions = qgenqueries.package_all_questions(job.data["submission_id"], data)
+    combined_questions = qgen_queries.package_all_questions(job.data["submission_id"], data)
     name = job.data["assignment_title"] + '_generated_' + datetime.now().strftime("%d%m%Y_%H:%M:%S")
 
     status, s3_path = fm.create_json_file(name + '.json', combined_questions, rename=True)
@@ -203,7 +203,7 @@ def _process_viva(job:_SubsystemJob, data:dict)->SubsystemStatus:
     #     print(f"Error uploading JSON data to S3: {str(e)}")
     #     return SubsystemStatus.REMOTE_SYS_ERROR
     
-    qgenqueries.upload_generated_files(job.data["submission_id"], name, s3_path, 'GENERATED')
+    qgen_queries.upload_generated_files(job.data["submission_id"], name, s3_path, 'GENERATED')
     return SubsystemStatus.OKAY
 
 def _process_rubric(job:_SubsystemJob, data:dict)->SubsystemStatus:
@@ -489,7 +489,7 @@ def submit_new_rubric_gen(description:str, staffemail:str, criteria:[dict], ulos
         status,data = _submit_job(job)
         if status != SubsystemStatus.OKAY:
             return status, jID
-        return _process_completed_job(job, json.loads(data)), jID
+        return _process_completed_job(job, data), jID
     else:
         _jobQueue.append(job)
 
@@ -547,7 +547,7 @@ def test_submit_new_rubric_job(staff_email:str,
         if status != SubsystemStatus.OKAY:
             print(data)
             return status, jID
-        return _process_completed_rubric(job, json.loads(data)), jID
+        return fm._process_completed_rubric(job, json.loads(data)), jID
     else:
         _jobQueue.append(job)
 

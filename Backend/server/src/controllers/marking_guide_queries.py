@@ -1,10 +1,10 @@
 from flask import json, send_file
 from sqlalchemy import select
+
 from src.db_instance import db
 from src.models.models_all import *
-
-from src.file_management import _allowed_filename, store_file_storage, del_file, FileStatus
-from src.job_subsystem import SubsystemStatus, submit_new_rubric_convert
+import src.file_management as fm
+import src.job_subsystem as js
 
 def upload_marking_guide_to_db(staff_email, file):
     '''
@@ -19,13 +19,13 @@ def upload_marking_guide_to_db(staff_email, file):
         if staff is None: 
             return {"message": "Staff email not found"}, 404
         # Step 1: Validate the file type 
-        if not _allowed_filename(file.filename):
+        if not fm._allowed_filename(file.filename):
             return {"message": f"File {file.filename} has an invalid extension"}, 400
         
         # Step 2: Store the file in a file storage system 
-        file_status, file_path = store_file_storage(file)
+        file_status, file_path = fm.store_file_storage(file)
         
-        if file_status != FileStatus.OKAY:
+        if file_status != fm.FileStatus.OKAY:
             return {"message": "File upload failed.", "error": file_status.name}, 400
 
         # Step 3: Store the file details in the database (Marking Guide table)
@@ -73,9 +73,9 @@ def generate_marking_guide_rubric(marking_guide_id, data):
         if not isinstance(ulos, list) or len(ulos) == 0:
             return {"message": "The 'ulos' field must be a non-empty list."}, 400
         # Step 4: TODO Send request to job subsystem 
-        job_status, job_id  = submit_new_rubric_convert(marking_guide.marking_guide_s3_file_path, staff_email, ulos, marking_guide_id)
+        job_status, job_id  = js.submit_new_rubric_convert(marking_guide.marking_guide_s3_file_path, staff_email, ulos, marking_guide_id)
 
-        if job_status != SubsystemStatus.OKAY:
+        if job_status != js.SubsystemStatus.OKAY:
             return {"error": f"Failed to submit job for question generation checking status {job_status}"}, 500
         
         response_body = {

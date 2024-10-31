@@ -6,8 +6,8 @@ from .collaborator_routes import collaborator
 from .auth_routes import auth
 from .student_routes import student
 from .submission_routes import submission
-from .questions_routes import question
-from .question_bank_routes import question_bank
+from .qgen_routes import question
+from .qbank_routes import question_bank
 from .test_routes import test
 from .rubric_routes import rubric
 from .marking_guide_routes import marking_guide

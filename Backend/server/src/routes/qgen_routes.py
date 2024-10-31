@@ -1,6 +1,8 @@
-from flask import Blueprint, jsonify
-from src.controllers.question_generation_queries import *
+from flask import Blueprint, jsonify, request
 import traceback
+
+from src.controllers.qgen_queries import *
+
 question = Blueprint('question', __name__)
 
 # U-B05 (task 2): Route to generate questions for ALL SUBMISSIONS
@@ -56,11 +58,10 @@ def check_job_status(job_id):
         return jsonify({"message: An error occured while getting the job status." "error": str(e)}), 500
 
 # U-B09: Route for downloading questions PDF for a submission ID
-@question.route('/download_questions/<int:submission_id>', methods=['GET'])
-def download_questions_pdf(submission_id):
+@question.route('/download_questions/<int:submission_id>/<string:format>', methods=['GET'])
+def download_questions_pdf(submission_id, format):
     try:
-        response, status_code = download_questions(submission_id)
-        return jsonify(response), status_code
+        return download_questions(submission_id, format)
     except Exception as e:
         traceback.print_exc()
         return jsonify({"message: An error occured while getting the job status." "error": str(e)}), 500

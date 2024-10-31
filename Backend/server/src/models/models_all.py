@@ -7,7 +7,7 @@ from sqlalchemy import JSON, BigInteger, Column, Table, ForeignKey, String, Fore
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
 from sqlalchemy.ext.mutable import MutableList
-from src.file_management import get_file, FileStatus
+import src.file_management as fm
 # https://flask.palletsprojects.com/en/3.0.x/patterns/sqlalchemy/#flask-sqlalchemy-extension
 # https://auth0.com/blog/sqlalchemy-orm-tutorial-for-python-developers/
 # https://flask-sqlalchemy.palletsprojects.com/en/2.x/models/
@@ -133,9 +133,9 @@ class Project(db.Model):
         for qn_bank in self.qn_banks:
             try: 
                 # Use the get_file method to retrieve file from s3
-                status, file_object = get_file(qn_bank.qnbank_file_path)
+                status, file_object = fm.get_file(qn_bank.qnbank_file_path)
                 # Check if file retrieval was successful 
-                if status!= FileStatus.OKAY or file_object is None:
+                if status!= fm.FileStatus.OKAY or file_object is None:
                     print(f"Failed to retrieve file: {qn_bank.qnbank_file_path}")
                     continue
                 # If the file was retrieved successfully, read it as csv

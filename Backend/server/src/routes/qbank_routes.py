@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from src.controllers.question_bank_queries import *
+from src.controllers.qbank_queries import *
 
 # Create a Blueprint for the question bank
 question_bank = Blueprint('question_bank', __name__)

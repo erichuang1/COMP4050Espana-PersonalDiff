@@ -1,6 +1,6 @@
 import src.file_management as fm
 import src.job_subsystem as js
-import src.controllers.question_generation_queries as qgenqueries
+import src.controllers.qgen_queries as qgen_queries
 import src.ai.viva_questions as viva
 import src.ai.pdf_to_text as ptt
 import src.ai.rubric_gen as rubric

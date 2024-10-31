@@ -661,7 +661,7 @@
 #      # json.dump(combined_questions, file) # This will have to be read back as json later
 #      # file.close()
 # +    
-#      qgenqueries.upload_generated_files(job.submissionID, name, s3_path, 'GENERATED')
+#      qgen_queries.upload_generated_files(job.submissionID, name, s3_path, 'GENERATED')
 #      return SubsystemStatus.OKAY
  
 # @@ -282,21 +288,18 @@ def _process_completed_rubric(job:_SubsystemJob, data:dict)->SubsystemStatus:

@@ -417,7 +417,7 @@ def convert_md_str_to_pdf(data:str, path:str)->(FileStatus, str):
     pdf.save(path)
     return FileStatus.OKAY,path
 
-def convert_md_str_to_pdf_bytes(data:str, path:str)->(FileStatus, io.BytesIO):
+def convert_md_str_to_pdf_bytes(data:str)->(FileStatus, io.BytesIO):
     """Converts a given MD formatted string into a PDF format and returns a BytesIO object for that PDF format."""
     pdf = MarkdownPdf(toc_level = 3)
     pdf.meta['title'] = 'Title'

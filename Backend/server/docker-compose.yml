@@ -1,0 +1,33 @@
+version: '3'
+services:
+  web:
+    build: .
+    container_name: flask_container
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on: 
+      - db 
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - /home/ec2-user/COMP4050/files:/app/files  # Maps host directory to container directory
+    environment:
+      - PYTHONUNBUFFERED=1 
+  
+  db:
+    image: mysql
+    container_name: mysql_container
+    ports:
+      - "3307:3306"
+    env_file:
+      - .env
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+volumes: 
+  mysql_data:
+
+  
+  

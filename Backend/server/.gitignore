@@ -1,7 +1,9 @@
 # Custom ignore
 flask_session/
-docker-compose.yml
-initialise_db.py
+# docker-compose.yml
+# initialise_db.py
+cert.pem
+key.pem
 # Use these commands to ignore the edits
 # git update-index --assume-unchanged .\initialise_db.py
 # git update-index --assume-unchanged .\docker-compose.yml
@@ -130,6 +132,8 @@ celerybeat.pid
 
 # Environments
 .env
+.env.docker
+.env.local
 .venv
 env/
 venv/

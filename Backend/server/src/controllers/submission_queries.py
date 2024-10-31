@@ -1,8 +1,9 @@
+from sqlalchemy import select
+from sqlalchemy import text
+
 from src.db_instance import db
 from src.models.models_all import *
-from sqlalchemy import select
-from src.file_management import _allowed_filename, store_file_storage, del_file, FileStatus
-from sqlalchemy import text
+import src.file_management as fm
 
 def batch_upload_pdfs(unit_code, project_title, staff_email, files):
     """
@@ -24,12 +25,12 @@ def batch_upload_pdfs(unit_code, project_title, staff_email, files):
     # Step 2: Loop through each file
     for file in files:
         # Step 2.1: Validate file extension
-        if not _allowed_filename(file.filename):
+        if not fm._allowed_filename(file.filename):
             return {"message": f"File {file.filename} has an invalid extension"}, 400
         
         # Step 2.2: Upload the file using file management
-        file_status, file_path = store_file_storage(file)
-        if file_status != FileStatus.OKAY:
+        file_status, file_path = fm.store_file_storage(file)
+        if file_status != fm.FileStatus.OKAY:
             return {"message": f"File {file.filename} upload failed", "error": file_status.name}, 400
     
         # Step 3: Get the staff details of the uploader using the staff_email
@@ -131,8 +132,8 @@ def delete_all_files(unit_code, project_title):
             return {"message": "No Submissions found"}, 404
         # Step 3: Go through each submission in the project and interface with the File System to delete it 
         for submission in submissions:
-            filestatus = del_file(submission.submission_file_name)
-            if filestatus != FileStatus.OKAY:
+            filestatus = fm.del_file(submission.submission_file_name)
+            if filestatus != fm.FileStatus.OKAY:
                 return {"message": f"File {submission.submission_file_name} could not be deleted", "error": filestatus.name}, 400
             else:
                 db.session.delete(submission)
@@ -154,8 +155,8 @@ def delete_file_from_db(unit_code, project_title, submission_id):
     if submission is None:
         return {"message": f"Submission with ID {submission_id} not found"}, 404
     
-    filestatus = del_file(submission.submission_file_name)
-    if filestatus != FileStatus.OKAY:
+    filestatus = fm.del_file(submission.submission_file_name)
+    if filestatus != fm.FileStatus.OKAY:
         return {"message": f"File {submission.submission_file_name} could not be deleted", "error": filestatus.name}, 400
     else:
         db.session.delete(submission)

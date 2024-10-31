@@ -1,0 +1,32 @@
+{
+	'success': '{
+		"questions": [
+			{
+				"main_question": "Can you explain the key principles of Agile methodologies and how they differ from traditional software development approaches?",
+				"follow_up_questions": [
+					"How do Agile methodologies prioritize customer collaboration and responding to change over following a plan?",
+					"In what ways do iterative development and incremental delivery contribute to the success of Agile projects?"
+				],
+				"rationale": "This question assesses the student\'s familiarity with Agile methodologies, their ability to discuss key principles, and their critical thinking skills in comparing Agile to traditional approaches."
+			},
+			
+			{
+				"main_question": "How do Agile methodologies promote flexibility and adaptability in software development projects?",
+				"follow_up_questions": [
+					"Can you provide examples of Agile practices, such as daily stand-up meetings or sprint planning, that enhance project adaptability?",
+					"How does the concept of \'working software over comprehensive documentation\' reflect the Agile emphasis on flexibility?"
+				],
+				"rationale": "This question evaluates the student\'s understanding of how Agile methodologies support flexibility, as well as their ability to delve into specific Agile practices and their implications for project adaptability."
+			},
+			
+			{
+				"main_question": "Discuss the role of collaboration and communication in Agile software development teams and how they contribute to project success.",
+				"follow_up_questions": [
+					"How does the principle of \'individuals and interactions over processes and tools\' shape team dynamics in Agile projects?",
+					"In what ways can effective communication and collaboration practices lead to improved product quality and customer satisfaction in Agile development?"
+				],
+				"rationale": "This question tests the student\'s discussion proficiency by asking them to analyze the importance of collaboration and communication in Agile teams, as well as their critical thinking in connecting these factors to project outcomes."
+			}
+		]
+	}'
+}

@@ -1,0 +1,2 @@
+# This PowerShell script activates the Python virtual environment
+& (Join-Path -Path (Split-Path $PSScriptRoot -Parent) -ChildPath "env\Scripts\Activate.ps1") # Parent folder, equilvent to `& ..\env\Scripts\Activate.ps1`

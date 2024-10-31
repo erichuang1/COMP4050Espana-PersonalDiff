@@ -1,0 +1,45 @@
+{
+  "assessment": "Assessment 1",
+  "rubric_json": {
+    "fail": {
+      "mark_min": 0,
+      "mark_max": 49,
+      "correctness": "Poor correctness",
+      "critical_thinking": "Lacks critical thinking",
+      "communication_and_presentation": "Poor presentation",
+      "referencing": "Incorrect referencing"
+    },
+    "pass": {
+      "mark_min": 50,
+      "mark_max": 64,
+      "correctness": "Sufficient correctness",
+      "critical_thinking": "Adequate critical thinking",
+      "communication_and_presentation": "Adequate presentation",
+      "referencing": "Sufficient referencing"
+    },
+    "credit": {
+      "mark_min": 65,
+      "mark_max": 74,
+      "correctness": "Good correctness",
+      "critical_thinking": "Good critical thinking",
+      "communication_and_presentation": "Good presentation",
+      "referencing": "Good referencing"
+    },
+    "distinction": {
+      "mark_min": 75,
+      "mark_max": 84,
+      "correctness": "Very good correctness",
+      "critical_thinking": "Very good critical thinking",
+      "communication_and_presentation": "Very good presentation",
+      "referencing": "Very good referencing"
+    },
+    "high_distinction": {
+      "mark_min": 85,
+      "mark_max": 100,
+      "correctness": "Excellent correctness",
+      "critical_thinking": "Excellent critical thinking",
+      "communication_and_presentation": "Excellent presentation",
+      "referencing": "Excellent referencing"
+    }
+  }
+}
